@@ -35,17 +35,10 @@ func GetAddress(wif *btcutil.WIF) (*btcutil.AddressPubKey, error) {
 	return btcutil.NewAddressPubKey(wif.PrivKey.PubKey().SerializeCompressed(), params)
 }
 
-func pubKeyHashToScriptHash(pubKeyHash []byte) []byte {
+func pubKeyHashToScript(pubKey []byte) []byte {
+	pubKeyHash := btcutil.Hash160(pubKey)
 	script, err := txscript.NewScriptBuilder().
 		AddOp(txscript.OP_0).AddData(pubKeyHash).Script()
-	if err != nil {
-		panic(err)
-	}
-
-	redeemScriptHash := btcutil.Hash160(script)
-	script, err = txscript.NewScriptBuilder().
-		AddOp(txscript.OP_HASH160).AddData(redeemScriptHash).
-		AddOp(txscript.OP_EQUAL).Script()
 	if err != nil {
 		panic(err)
 	}
@@ -60,11 +53,10 @@ func main() {
 	fmt.Println("Common Address:", address.EncodeAddress())
 
 	pubKey := wif.PrivKey.PubKey().SerializeCompressed()
-	pubKeyHash := btcutil.Hash160(pubKey)
 
-	scriptPubKey := pubKeyHashToScriptHash(pubKeyHash)
+	script := pubKeyHashToScript(pubKey)
 
-	w, err := btcutil.NewAddressScriptHashFromHash(scriptPubKey[2:22], params)
+	w, err := btcutil.NewAddressScriptHash(script, params)
 	if err != nil {
 		panic(err)
 	}
